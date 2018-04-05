@@ -126,5 +126,5 @@ cy <- year(job_time)
 cm <- month(job_time)
 cd <- day(job_time)
 file_name <- str_c("data/meta/thread_metadata_",str_c(cy,cm,cd,sep = "-"),".csv")
-write.csv(thread_meta_data,file_name)
+write.csv(thread_meta_data,file_name,row.names = FALSE)
 #get sub-section metadata

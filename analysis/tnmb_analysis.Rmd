@@ -9,7 +9,7 @@ output:
 ```{r setup,include = FALSE}
 #setup working directory
 knitr::opts_knit$set(root.dir = dirname(getwd()))
-x<-c("stringr","lubridate","tidyverse")
+x<-c("stringr","lubridate","tidyverse","DT")
 lapply(x, require, character.only = TRUE)
 
 ```
@@ -116,53 +116,16 @@ ttl6 <- dataset_add_dates %>% group_by(parent_thread) %>%
 rm(time_intervals,time_span,down_intervals,down_times,down_dates,all_downs)
 ```
 
-## 1.总体分析
+## 1.总体概况
 本报告的统计区间为：`r last_thread_date-months(1)` 至 `r last_thread_date`。  
 期间内，A岛在共爆炸了**`r ttl5`**小时，爆炸时间如下：`r str_sub(str_c(ttl4," 和"),end = -3)`。  
 期间内，总新串数为：**`r ttl0`**，总回复数为：**`r ttl1`**,总活跃用户（按饼干计）数为：**`r ttl2`**,平均用户回复数：**`r round(ttl3,2)`**,平均串长为：**`r ttl6`**。
+### 回复
 
-### 新串分析
+下图分别为本月每日回复数；每小时回复数和每周日均回复数
 
 ```{r echo=FALSE}
 source("functions/multiplot.R")
-t1 <- meta_add_date %>%
-    group_by(date) %>%
-    count() %>%
-    ungroup() %>%
-    ggplot(aes(x = date,y = n)) +
-    geom_col(fill = "skyblue3") +
-    labs(x = "Date",y = "Average Thread")  +
-    theme_light()
-
-t2 <- meta_add_date %>%
-    group_by(weekdays) %>%
-    mutate(weekdays_on = n_distinct(week)) %>%
-    summarise(avg_post = round(n()/first(weekdays_on))) %>%
-    ungroup() %>%
-    mutate(weekdays = factor(weekdays,levels = c("Mon","Tue","Wed","Thu","Fri","Sat","Sun"))) %>%
-    ggplot(aes(x = weekdays,y = avg_post)) +
-    geom_col(fill = "skyblue3") + 
-    theme_light() +
-    labs(x = "", y = "Average Thread Daily")
-t3 <- meta_add_date %>%
-    group_by(hour) %>%
-    mutate(hours_on = n_distinct(day)) %>%
-    summarise(avg_post = round(n()/first(hours_on),2)) %>%
-    ungroup() %>%
-    ggplot(aes(x = hour,y = avg_post)) +
-    geom_col(fill = "skyblue3") + 
-    theme_light() +
-    labs(x = "", y = "Average Thread Hourly")
-t0 <- multiplot(t1,t2,t3,cols = 2)
-```
-
-
-
-
-
-### 回复分析
-
-```{r echo=FALSE}
 p1 <- dataset_add_dates %>%
     group_by(date) %>%
     count() %>%
@@ -195,5 +158,75 @@ p0 <- multiplot(p1,p2,p3,cols = 2)
 
 ## 本月新串排名
 
-### TOP10
+### TOP100
+```{r echo=FALSE}
+dataset_add_dates %>%
+    group_by(parent_thread) %>%
+    summarise(total_post = n(),channel_name = first(channel_name)) %>%
+    ungroup() %>%
+    mutate(rank = min_rank(desc(total_post))) %>%
+    arrange(rank) %>%
+    dplyr::filter(rank <= 100) %>%
+    left_join(dataset_meta %>% select(header_id,header_content),c("parent_thread"="header_id")) %>%
+    mutate(content = str_sub(header_content,start = 1,end = 20)) %>%
+    select(-header_content) %>% 
+    mutate(link = str_c("http://adnmb.com/t/",parent_thread),total_post = round(total_post,-1)) %>%
+    DT::datatable(colnames = c("串号","回复数","频道","排名","内容","链接"))
+```
+
+### 分区概况
+```{r echo=FALSE}
+dataset_add_dates %>%
+    group_by(channel_name) %>%
+    summarise(total_post = n(),total_thread = n_distinct(parent_thread)) %>%
+    ungroup() %>% 
+    mutate(avg_post_thread = total_post/total_thread) %>%
+    mutate(total_post = round(total_post,-1),avg_post_thread = round(avg_post_thread)) %>%
+    arrange(desc(total_post)) %>%
+    DT::datatable(colnames = c("频道","总回复","总串数","每串平均回复"))
+```
+
+
+### 分区仪表盘(in progress)
+```{r echo=FALSE}
+#external link to dashboard: sample below
+#filter
+all_channels <- unique(dataset_meta$channel_name)
+selected_channel <- "欢乐恶搞"
+filtered_dataset <- dataset_add_dates %>% dplyr::filter(channel_name ==selected_channel)
+fp1 <- filtered_dataset %>%
+    group_by(date) %>%
+    count() %>%
+    ungroup() %>%
+    ggplot(aes(x = date,y = n)) +
+    geom_col(fill = "skyblue3") +
+    labs(x = "Date",y = "Average Post")  +
+    theme_light()
+fp2 <- filtered_dataset %>%
+    group_by(weekdays) %>%
+    mutate(weekdays_on = n_distinct(week)) %>%
+    summarise(avg_post = round(n()/first(weekdays_on))) %>%
+    ungroup() %>%
+    mutate(weekdays = factor(weekdays,levels = c("Mon","Tue","Wed","Thu","Fri","Sat","Sun"))) %>%
+    ggplot(aes(x = weekdays,y = avg_post)) +
+    geom_col(fill = "skyblue3") + 
+    theme_light() +
+    labs(x = "", y = "Average Post Daily")
+fp3 <- filtered_dataset %>%
+    group_by(hour) %>%
+    mutate(hours_on = n_distinct(day)) %>%
+    summarise(avg_post = round(n()/first(hours_on))) %>%
+    ungroup() %>%
+    ggplot(aes(x = hour,y = avg_post)) +
+    geom_col(fill = "skyblue3") + 
+    theme_light() +
+    labs(x = "", y = "Average Post Hourly")
+```
+
+#### `r selected_channel`
+
+```{r echo=FALSE}
+fp0 <- multiplot(fp1,fp2,fp3,cols = 2)
+```
+
 
