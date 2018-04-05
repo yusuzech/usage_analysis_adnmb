@@ -1,0 +1,8 @@
+options(library(rvest))
+options(library(stringr))
+options(library(httr))
+options(library(lubridate))
+options(library(tidyverse))
+#options(Sys.setlocale("LC_ALL", locale = "Chinese"))
+Sys.setenv(TZ='Asia/Shanghai')
+cat("packages: tidyverse and rvest auto-loaded\nTime zone set to CST")

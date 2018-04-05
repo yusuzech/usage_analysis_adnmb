@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.csv
+data/datatable/*
+!data/datatable/.gitkeep
+data/merged_meta/*
+!data/merged_meta/.gitkeep
+data/meta/*
+!data/meta/.gitkeep
+data/thread/*
+!data/thread/.gitkeep
