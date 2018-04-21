@@ -1,5 +1,5 @@
 # usage_analysis_adnmb
-This repo is currently in use for creating dashboard and report for adnmb.com.
+This repo is currently in use for creating report for adnmb.com.
 
 
 2018-04-20 update
